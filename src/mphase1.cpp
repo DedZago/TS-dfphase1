@@ -138,8 +138,8 @@ namespace {
 	inline void ggmboot_stationary(int p, int n, const double *x, double *y, double b) {
 		int i, tot = 0;
 		while (tot < n) {
-			int C = R::sample(n, 1) - 1;  		// cutoff
-			// TODO: check if geometric starts from 0 or 1
+			int C = R::sample(n, 1) - 1;  			// cutoff
+			//! Geometric starts from 0, hence add 1
 			int bsamp = R::rgeom(1.0/b) + 1;    // length
 			if (bsamp > tot - n) {
 				// truncate if more observations than n
@@ -147,6 +147,7 @@ namespace {
 			}
 			for (int l = 0; l < bsamp; l++) {
 				// TODO: Check pointer correctness
+				// If C+l > n, wrap integers around the circle
 				idx = ((C + l) < n) ? C + l : (C + l) % n;
 				F77_CALL(dcopy)
 				(&p, x + idx * p, &ione, y + (tot + l) * p, &ione)
