@@ -2,6 +2,7 @@ mphase1 <- function(x, plot=TRUE, post.signal=TRUE,
                     isolated=dim(x)[2]>1, step=TRUE,
                     alpha=0.05, gamma=0.5,
                     K=min(50,round(sqrt(dim(x)[3]))), lmin=5, L=1000,
+                    indep=FALSE,
                     seed=11642257) {
     d <- dim(x)
     if ((length(d)<2) || (length(d)>3)) stop("x must be a pxnxm array")
@@ -18,7 +19,9 @@ mphase1 <- function(x, plot=TRUE, post.signal=TRUE,
         }
         set.seed(seed)
     }
-    u <- MPHASE1(x,isolated,step,K,lmin,L)
+    if (!is.boolean(indep)) stop("Indep should either be TRUE or FALSE")
+
+    u <- MPHASE1(x,isolated,step,K,lmin,L,indep)
     u$x <- x
     if (is.null(dimnames(x))) {
         nm <- paste("X",1:dim(x)[1],sep="")

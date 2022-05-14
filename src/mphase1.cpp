@@ -56,7 +56,7 @@ namespace {
 //-----------------------------------
 
 // [[Rcpp::export]]
-List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int nperm, bool time) {
+List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int nperm, bool indep) {
     IntegerVector dim = xx.attr("dim");
     int i, j, p = dim[0], n = dim[1], m = dim[2], nm = n * m, pnm = p * nm;
     double b;
@@ -69,7 +69,7 @@ List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int 
            *pstat = work.begin(), *xperm = pstat + ncp * nperm, *w = xperm + pnm,
            *psi, pv, wobs, adj = nperm / (nperm - 1.0);
     int *steps = stepssteps.begin(), *iw = iwork.begin();
-    if (time) {
+    if (indep) {
         b = ggmoptsize(xx);
         for (i = 1, psi = pstat; i <= nperm; i++, psi += ncp) {
             ggmboot_stationary(p, nm, x, xperm, b);
@@ -112,7 +112,7 @@ List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int 
     return List::create(_["center"] = ll, _["r"] = rr, _["signed.ranks"] = scsc,
                         _["forward"] = DataFrame::create(_["type"] = type, _["time"] = time,
                                                          _["T"] = ss, _["a"] = sa, _["b"] = sb),
-                        _["Wobs"] = wobs, _["p.value"] = pv);
+                        _["Wobs"] = wobs, _["p.value"] = pv, _["indep"] = indep);
 }
 
 namespace {
