@@ -127,19 +127,20 @@ namespace {
 		! Temporarily using an R function
 		*/
 		double b;
-		Environment myEnv = Environment::global_env();
-		Function bstar = myEnv["bstar"];
+		Environment myEnv = Environment::namespace_env("np");
+		Function bstar = myEnv["b.star"];
 
 		// Calculate expected length without truncating
-		NumericVector b_vec = bstar(xx, false);
-		return max(b_vec);
+		NumericMatrix b_mat = bstar(xx);
+		//! Returns maximum E[b] for marginals, not sure about multivariate processes
+		return max(b_mat(_, 0));
 	}
 
 	inline void ggmboot_stationary(int p, int n, const double *x, double *y, double b) {
 		int i, tot = 0;
 		while (tot < n) {
 			int C = R::sample(n, 1) - 1;  			// cutoff
-			//! Geometric starts from 0, hence add 1
+			//? Geometric starts from 0, hence add 1
 			int bsamp = R::rgeom(1.0/b) + 1;    // length
 			if (bsamp > tot - n) {
 				// truncate if more observations than n
