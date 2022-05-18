@@ -12,7 +12,42 @@ v0.1 on \today}
 \maketitle
 
 \paragraph{Summary.} Modify the \texttt{mphase1} procedure to allow for nonparametric testing of the stability of a time series.
+Since we assume the goal to be Phase~II prospective monitoring, the model is supposed not to contain a stochastic trend.
+Otherwise, the process would not be stationary by assumption and thus Phase~II prospective monitoring of the mean would be useless.
+We want to estimate location shifts in the Phase~I sample, that is, we want to test the hypothesis in \textcite{capizzi2017},
+\[
+    \begin{cases}
+        H_0: \text{all the $ \bm{\beta}_{\text{step}}$ and $ \bm{\beta}_\text{isolated}$ are zero}\\
+        H_1: \text{at least one $ \bm{\beta}_\text{step}$ or $ \bm{\beta}_\text{isolated}$ is nonzero}.
+    \end{cases}
+\]
 
+
+\paragraph{Idea.} Substitute the permutation $ p$-value calculation with a procedure based on bootstrap for time series.
+Specifically, we could consider the following approaches:
+\begin{itemize}
+    \item (\textsf{Circular}) \textsf{Block bootstrap}:
+        \begin{enumerate}[label=\arabic*.]
+            \item select block length $b$;
+            \item resample blocks $ \mathcal{B} = \left\{ (x_{k}, x_{k+1}, \ldots, x_{(k + b)\bmod m}) \right\}$ to construct the bootstrap time series $ x^*_1, \ldots, x^*_m$, where $ k \iid \text{DiscreteUniform}(1, \ldots, m)$.
+            \item \textbf{Problem}: the resulting resampled stochastic process is not guaranteed to be stationary even when $ x_1, \ldots, x_m$ is stationary.
+                Thus we possibly include non-stationary samples in the $ p$-value calculation.
+        \end{enumerate}
+
+    \item \textsf{AR-sieve bootstrap}:
+        \begin{enumerate}[label=\arabic*.]
+            \item select order $ p$ of the (V)AR stationary stochastic process:
+            \item fit the model and generate pseudo-observations using the estimated model;
+            \item fit the forward search and calculate the $ p$-values.
+        \end{enumerate}
+                
+    \item (\textsf{Circular}) \textsf{Stationary bootstrap}:
+        \begin{enumerate}[label=\arabic*.]
+            \item select expected block length $ b$;
+            \item resample blocks $ \mathcal{B} = \left\{ (x_{k}, x_{k+1}, \ldots, x_{(k + b)\bmod m}) \right\}$ to construct the bootstrap time series $ x^*_1, \ldots, x^*_m$, where $ k \iid \text{DiscreteUniform}(1, \ldots, m)$ and $ b \iid \text{Geom}(1/b)$.
+            \item fit the forward search and calculate the $ p$-values.
+        \end{enumerate}
+\end{itemize}
 
 \printbibliography
 \end{document}
