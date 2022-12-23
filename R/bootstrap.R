@@ -36,6 +36,32 @@ lam <- function(s){
 ## (2008). boot: Bootstrap R (S-Plus) Functions. R package version
 ## 1.2-34.) you ought to use the option round=TRUE.
 
+bopt = function(data, round=FALSE){
+  d = dim(data)
+  if(length(d) == 2){
+    return(max(bstar(data, round)))
+  } else if(length(d) == 3){
+    # p x n x m means that
+    # p-variate data from t = 1, ..., m
+    # observed n times for each variable
+    # convert to n data frames of side m x p
+    p = d[1]; n = d[2]; m = d[3];
+    out = matrix(NA, nrow = n, ncol = p)
+    for(j in 1:n){
+      dat = matrix(NA, nrow = m, ncol = p)
+      for(i in 1:m){
+        dat[i, ] = data[,j,i]
+      }
+      out[j, ] = bstar(dat, round)
+    }
+    BstarCB = colMeans(out)
+    if(round) BstarCB = ceiling(BstarCB)
+    return(max(BstarCB))
+  }
+}
+
+
+
 bstar <- function(data, round = FALSE){
 
   ## Convert the data object to a data frame to handle both vectors
@@ -184,7 +210,7 @@ bstar <- function(data, round = FALSE){
   }
 
   # return(cbind(BstarSB,BstarCB)) 
-  return(BstarSB) 
+  return(BstarCB) 
 }
 
 ## Here is a simple example with an n x 2 matrix containing n=10^5

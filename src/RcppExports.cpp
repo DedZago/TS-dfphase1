@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // alasso
 LogicalVector alasso(NumericMatrix x, NumericVector y, double gamma, double P);
 RcppExport SEXP _dfphase1_alasso(SEXP xSEXP, SEXP ySEXP, SEXP gammaSEXP, SEXP PSEXP) {
@@ -20,8 +25,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // MPHASE1
-List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int nperm);
-RcppExport SEXP _dfphase1_MPHASE1(SEXP xxSEXP, SEXP isolatedSEXP, SEXP stepSEXP, SEXP ncpSEXP, SEXP lminSEXP, SEXP npermSEXP) {
+List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int nperm, bool indep);
+RcppExport SEXP _dfphase1_MPHASE1(SEXP xxSEXP, SEXP isolatedSEXP, SEXP stepSEXP, SEXP ncpSEXP, SEXP lminSEXP, SEXP npermSEXP, SEXP indepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -31,7 +36,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type ncp(ncpSEXP);
     Rcpp::traits::input_parameter< int >::type lmin(lminSEXP);
     Rcpp::traits::input_parameter< int >::type nperm(npermSEXP);
-    rcpp_result_gen = Rcpp::wrap(MPHASE1(xx, isolated, step, ncp, lmin, nperm));
+    Rcpp::traits::input_parameter< bool >::type indep(indepSEXP);
+    rcpp_result_gen = Rcpp::wrap(MPHASE1(xx, isolated, step, ncp, lmin, nperm, indep));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -100,14 +106,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // ggdotrsp
-List ggdotrsp(IntegerVector ripar, NumericVector ry);
-RcppExport SEXP _dfphase1_ggdotrsp(SEXP riparSEXP, SEXP rySEXP) {
+List ggdotrsp(IntegerVector ripar, NumericVector rry);
+RcppExport SEXP _dfphase1_ggdotrsp(SEXP riparSEXP, SEXP rrySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type ripar(riparSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type ry(rySEXP);
-    rcpp_result_gen = Rcpp::wrap(ggdotrsp(ripar, ry));
+    Rcpp::traits::input_parameter< NumericVector >::type rry(rrySEXP);
+    rcpp_result_gen = Rcpp::wrap(ggdotrsp(ripar, rry));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -178,7 +184,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dfphase1_alasso", (DL_FUNC) &_dfphase1_alasso, 4},
-    {"_dfphase1_MPHASE1", (DL_FUNC) &_dfphase1_MPHASE1, 6},
+    {"_dfphase1_MPHASE1", (DL_FUNC) &_dfphase1_MPHASE1, 7},
     {"_dfphase1_ggrscore", (DL_FUNC) &_dfphase1_ggrscore, 3},
     {"_dfphase1_ggdepthranks", (DL_FUNC) &_dfphase1_ggdepthranks, 2},
     {"_dfphase1_ggclassicmshewhart", (DL_FUNC) &_dfphase1_ggclassicmshewhart, 3},

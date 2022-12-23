@@ -10,7 +10,8 @@ export(
     mshewhart, mshewhart.normal.limits,
     changepoint, changepoint.normal.limits,
     mchangepoint, mchangepoint.normal.limits,
-    rsp, mphase1, postsignal
+    rsp, mphase1, postsignal,
+    bopt
 )
 importFrom(Rcpp, evalCpp)
 S3method("print","mphase1")

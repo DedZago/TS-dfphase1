@@ -15,6 +15,10 @@ namespace {
     //--------------------
     // Functions
     //--------------------
+	// calculate optimal block bootstrap size
+	inline int ggmoptsize(NumericVector xx);
+	// block bootstrap
+	inline void ggmblockboot(int p, int n, const double *x, double *y, int bl);
     // column of x are randomly permutated
     inline void ggmperm(int p, int n, double *x);
     // length(a)=n; set r=x to replace the values of vector with their ranks
@@ -59,7 +63,6 @@ namespace {
 List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int nperm, bool indep) {
     IntegerVector dim = xx.attr("dim");
     int i, j, p = dim[0], n = dim[1], m = dim[2], nm = n * m, pnm = p * nm;
-    double b;
     IntegerVector stepssteps(1 + 2 * ncp), iwork(2 + 4 * ncp + nm);
     NumericVector scsc(pnm), ll(p), statstat(ncp), aa(ncp), bb(ncp),
         work(ncp * nperm + 2 * pnm + p * (m + 1) + std::max(m, p) + 2 * nm);
@@ -70,9 +73,9 @@ List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int 
            *psi, pv, wobs, adj = nperm / (nperm - 1.0);
     int *steps = stepssteps.begin(), *iw = iwork.begin();
     if (indep) {
-        b = ggmoptsize(xx);
+        std::copy(x, x + pnm, xperm);
         for (i = 1, psi = pstat; i <= nperm; i++, psi += ncp) {
-            ggmboot_stationary(p, nm, x, xperm, b);
+            ggmperm(p, nm, xperm);
             ggforward(p, n, m, xperm, isolated, step, lmin, ncp, l, r, sc, steps, psi, iw, w);
             for (j = 0; j < ncp; j++) {
                 a[j] += (psi[j] - a[j]) / i;
@@ -80,9 +83,9 @@ List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int 
             }
         }
     } else {
-        std::copy(x, x + pnm, xperm);
+        int bl = ggmoptsize(xx);
         for (i = 1, psi = pstat; i <= nperm; i++, psi += ncp) {
-            ggmperm(p, nm, xperm);
+            ggmblockboot(p, nm, x, xperm, bl);
             ggforward(p, n, m, xperm, isolated, step, lmin, ncp, l, r, sc, steps, psi, iw, w);
             for (j = 0; j < ncp; j++) {
                 a[j] += (psi[j] - a[j]) / i;
@@ -121,37 +124,36 @@ namespace {
     // IMPLEMENTATION
     // --------------------------------------------------
 
-	inline double ggmoptsize(xx) {
+	inline int ggmoptsize(NumericVector xx) {
 		/*
 		TODO: Implement optimal bootstrap (expected) length in C++
 		! Temporarily using an R function
 		*/
-		double b;
-		Environment myEnv = Environment::namespace_env("np");
-		Function bstar = myEnv["b.star"];
+		Environment myEnv = Environment::namespace_env("dfphase1");
+		Function bopt = myEnv["bopt"];
 
-		// Calculate expected length without truncating
-		NumericMatrix b_mat = bstar(xx);
+		// Calculate expected length with rounding (above for CB)
+		int bMax = Rcpp::as<int>(bopt(xx, true));
 		//! Returns maximum E[b] for marginals, not sure about multivariate processes
-		return max(b_mat(_, 0));
+		return bMax;
 	}
 
-	inline void ggmboot_stationary(int p, int n, const double *x, double *y, double b) {
-		int i, tot = 0;
+	inline void ggmblockboot(int p, int n, const double *x, double *y, int bl) {
+		// Block bootstrap, Eq. (2) in [Buhlmann, 2002]
+		int tot = 0;		// Total number of observations in bootstrap sample
+		int bsamp = bl;    	// length of observations to copy starting from C
+		int idx;			// Running index to copy observations
 		while (tot < n) {
-			int C = R::sample(n, 1) - 1;  			// cutoff
-			//? Geometric starts from 0, hence add 1
-			int bsamp = R::rgeom(1.0/b) + 1;    // length
+			int C = Rcpp::sample(n, 1)[0] - 1;  			// Starting point
 			if (bsamp > tot - n) {
-				// truncate if more observations than n
+				// truncate if less observations are needed to reach n
 				bsamp = tot - n;
 			}
 			for (int l = 0; l < bsamp; l++) {
 				// TODO: Check pointer correctness
 				// If C+l > n, wrap integers around the circle
 				idx = ((C + l) < n) ? C + l : (C + l) % n;
-				F77_CALL(dcopy)
-				(&p, x + idx * p, &ione, y + (tot + l) * p, &ione)
+				F77_CALL(dcopy)(&p, x + idx * p, &ione, y + (tot + l) * p, &ione);
 			}
 			tot += bsamp;
 		}

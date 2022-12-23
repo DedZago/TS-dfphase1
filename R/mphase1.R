@@ -19,7 +19,7 @@ mphase1 <- function(x, plot=TRUE, post.signal=TRUE,
         }
         set.seed(seed)
     }
-    if (!is.boolean(indep)) stop("Indep should either be TRUE or FALSE")
+    if (!is.logical(indep)) stop("Indep should either be TRUE or FALSE")
 
     u <- MPHASE1(x,isolated,step,K,lmin,L,indep)
     u$x <- x

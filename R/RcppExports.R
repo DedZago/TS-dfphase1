@@ -5,8 +5,8 @@ alasso <- function(x, y, gamma, P) {
     .Call('_dfphase1_alasso', PACKAGE = 'dfphase1', x, y, gamma, P)
 }
 
-MPHASE1 <- function(xx, isolated, step, ncp, lmin, nperm) {
-    .Call('_dfphase1_MPHASE1', PACKAGE = 'dfphase1', xx, isolated, step, ncp, lmin, nperm)
+MPHASE1 <- function(xx, isolated, step, ncp, lmin, nperm, indep) {
+    .Call('_dfphase1_MPHASE1', PACKAGE = 'dfphase1', xx, isolated, step, ncp, lmin, nperm, indep)
 }
 
 ggrscore <- function(x, score, iter = 30L) {
@@ -29,8 +29,8 @@ ggglrchart <- function(x, onlymean = FALSE, L = 1000L) {
     .Call('_dfphase1_ggglrchart', PACKAGE = 'dfphase1', x, onlymean, L)
 }
 
-ggdotrsp <- function(ripar, ry) {
-    .Call('_dfphase1_ggdotrsp', PACKAGE = 'dfphase1', ripar, ry)
+ggdotrsp <- function(ripar, rry) {
+    .Call('_dfphase1_ggdotrsp', PACKAGE = 'dfphase1', ripar, rry)
 }
 
 ggstepfactor <- function(m, level, rsteps) {
