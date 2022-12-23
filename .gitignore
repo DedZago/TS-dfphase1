@@ -300,12 +300,12 @@ TSWLatexianTemp*
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
 
-inst/lib
+/*/inst/lib
 .Rproj.user
-src/*.o
-src/*.so
-src/*.dll
-src/symbols.rds
+/*/src/*.o
+/*/src/*.so
+/*/src/*.dll
+/*/src/symbols.rds
 .Rhistory
 .RData
 .DS_Store
