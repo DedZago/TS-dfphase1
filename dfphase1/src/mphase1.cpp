@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 #include <R_ext/BLAS.h>
 using namespace Rcpp;
+#include <unistd.h>
 
 
 namespace {
@@ -16,9 +17,9 @@ namespace {
     // Functions
     //--------------------
 	// calculate optimal block bootstrap size
-	inline int ggmoptsize(NumericVector xx);
+	inline double ggmoptsize(NumericVector xx);
 	// block bootstrap
-	inline void ggmblockboot(int p, int n, const double *x, double *y, int bl);
+	inline void ggmgeomboot(int p, int n, int m, const double *x, double *y, double bl);
     // column of x are randomly permutated
     inline void ggmperm(int p, int n, double *x);
     // length(a)=n; set r=x to replace the values of vector with their ranks
@@ -76,6 +77,10 @@ List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int 
         std::copy(x, x + pnm, xperm);
         for (i = 1, psi = pstat; i <= nperm; i++, psi += ncp) {
             ggmperm(p, nm, xperm);
+			// for(int idx = 0; idx < pnm; ++idx){
+			// 	Rcout << *(x + idx) << " ";
+			// 	Rcout << *(xperm + idx) << "\n";
+			// }
             ggforward(p, n, m, xperm, isolated, step, lmin, ncp, l, r, sc, steps, psi, iw, w);
             for (j = 0; j < ncp; j++) {
                 a[j] += (psi[j] - a[j]) / i;
@@ -83,9 +88,15 @@ List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int 
             }
         }
     } else {
-        int bl = ggmoptsize(xx);
+        std::copy(x, x + pnm, xperm);
+        double bl = ggmoptsize(xx);
+		Rcout << "block size: " << bl << "\n";
         for (i = 1, psi = pstat; i <= nperm; i++, psi += ncp) {
-            ggmblockboot(p, nm, x, xperm, bl);
+            ggmgeomboot(p, n, m, x, xperm, bl);
+			// for(int idx = 0; idx < pnm; ++idx){
+			// 	Rcout << *(x + idx) << " ";
+			// 	Rcout << *(xperm + idx) << "\n";
+			// }
             ggforward(p, n, m, xperm, isolated, step, lmin, ncp, l, r, sc, steps, psi, iw, w);
             for (j = 0; j < ncp; j++) {
                 a[j] += (psi[j] - a[j]) / i;
@@ -118,13 +129,14 @@ List MPHASE1(NumericVector xx, bool isolated, bool step, int ncp, int lmin, int 
                         _["Wobs"] = wobs, _["p.value"] = pv, _["indep"] = indep);
 }
 
+
 namespace {
 
     // --------------------------------------------------
     // IMPLEMENTATION
     // --------------------------------------------------
 
-	inline int ggmoptsize(NumericVector xx) {
+	inline double ggmoptsize(NumericVector xx) {
 		/*
 		TODO: Implement optimal bootstrap (expected) length in C++
 		! Temporarily using an R function
@@ -133,39 +145,46 @@ namespace {
 		Function bopt = myEnv["bopt"];
 
 		// Calculate expected length with rounding (above for CB)
-		int bMax = Rcpp::as<int>(bopt(xx, true));
+		int bMax = Rcpp::as<double>(bopt(xx, false));
 		//! Returns maximum E[b] for marginals, not sure about multivariate processes
 		return bMax;
 	}
 
-	inline void ggmblockboot(int p, int n, const double *x, double *y, int bl) {
+	inline void ggmgeomboot(int p, int n, int m, const double *x, double *y, double bl) {
 		// Block bootstrap, Eq. (2) in [Buhlmann, 2002]
 		int tot = 0;		// Total number of observations in bootstrap sample
-		int bsamp = bl;    	// length of observations to copy starting from C
-		int idx;			// Running index to copy observations
-		while (tot < n) {
-			int C = Rcpp::sample(n, 1)[0] - 1;  			// Starting point
-			if (bsamp > tot - n) {
+		int i, idx0, idx1, bsamp;			// Running index to copy observations
+		// Rcout << "m: " << m << "\n";
+		while (tot < m) {
+			i = floor(m * unif_rand());
+			// bsamp = 1 + R::rgeom(1.0 / bl);
+			//FIXME: using circular block bootstrap, not stationary
+			bsamp = std::max(ceil(bl), 1.0);
+			if(bsamp == 0){continue;}
+			if (bsamp > m - tot) {
 				// truncate if less observations are needed to reach n
-				bsamp = tot - n;
+				bsamp = m - tot;
 			}
+
+			// Rcout << "i:" << i << "\tbsamp: " << bsamp << "\ttot: " << tot << "\n";
 			for (int l = 0; l < bsamp; l++) {
 				// TODO: Check pointer correctness
-				// If C+l > n, wrap integers around the circle
-				idx = ((C + l) < n) ? C + l : (C + l) % n;
-				F77_CALL(dcopy)(&p, x + idx * p, &ione, y + (tot + l) * p, &ione);
+				// If i+l > m, wrap integers around the circle
+				idx0 = ((i + l) < m) ? (i + l) : (i + l) % m;
+				// Rcout << "idx0: " << idx0 << "\tidx1: " << idx0 + 1 << "\ttot + l:" << tot + l << "\n";
+				std::copy(x + idx0*(p*n), x + (idx0+1)*(p*n), y + (tot+l)*(p*n));
 			}
 			tot += bsamp;
 		}
 	}
 
-	inline void ggmperm(int p, int n, double *x) {
+	inline void ggmperm(int p, int nm, double *x) {
 		int i;
-		while (n) {
-			i = floor(n * unif_rand());
-			n--;
+		while (nm) {
+			i = floor(nm * unif_rand());
+			nm--;
 			F77_CALL(dswap)
-			(&p, x + i * p, &ione, x + n * p, &ione);
+			(&p, x + i * p, &ione, x + nm * p, &ione);
 		}
 	}
 

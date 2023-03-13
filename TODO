@@ -1,0 +1,6 @@
+
+Todo:
+  ✔ Add stationary bootstrap @done(23-03-12 18:34)
+  ☐ Add autoregressive terms into model selection step
+    ☐ Develop an autoregressive model to test stationarity in the mean
+    ☐ Extend the code to account for autoregression

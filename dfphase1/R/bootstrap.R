@@ -54,9 +54,9 @@ bopt = function(data, round=FALSE){
       }
       out[j, ] = bstar(dat, round)
     }
-    BstarCB = colMeans(out)
-    if(round) BstarCB = ceiling(BstarCB)
-    return(max(BstarCB))
+    BstarCB = apply(out, 2, median)
+    # if(round) BstarCB = ceiling(BstarCB)
+    return(max(ceiling(BstarCB)))
   }
 }
 
