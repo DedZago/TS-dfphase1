@@ -1,7 +1,7 @@
 \documentclass{article}
 \usepackage{global-layout-notes}
 \usepackage{global-statmacros}
-\bibliography{~/Documents/MEGA/main/biblio}
+\bibliography{~/Documents/MEGA/main/courses/biblio.bib}
 \author{Daniele Zago$^1$}
 \title{Time series dfphase~I}
 \date{%
@@ -11,16 +11,28 @@ v0.1 on \today}
 \begin{document}
 \maketitle
 
-\paragraph{Summary.} Modify the \texttt{mphase1} procedure to allow for nonparametric testing of the stability of correlated data.
-The extensions required to do so are the substitution of the permutation hypothesis test with a hypothesis test based on block bootstrap; and to remove the autoregressive effect from the mean estimate.
-The proposed procedure is as follows: first, select the block length $ b$ so that a block bootstrap can be applied to the data.
-This is done by selecting the maximum of the median block sizes (if there are multiple rational subgroups) among each marginal process.
-It is better to avoid a vector autoregressive model, because the number of parameters would be too large.
-Then, apply the signed rank transformation to the data in order for the procedure to be nonparametric.
-Then, at each iteration $ k$, the step and isolated shifts are added to the model and the most promising one is included in the regression.
-Variable selection might be performed by using the LARS algorithm and selecting the best dummy regressor among the candidates.
-This simply amounts to finding the potential regressor with highest correlation with the response variable.
-Then, the regressor is added to the design matrix and standard linear regression is used to estimate the predicted value.
+\paragraph{Summary.}
+To allow for nonparametric testing of the stability of correlated data, the \texttt{mphase1} procedure needs to be modified.
+ This involves substituting the permutation hypothesis test with a hypothesis test based on block bootstrap, and removing the autoregressive effect from the mean estimate.
+ The proposed procedure follows these steps: firstly, the block length $b$ is selected based on the maximum of median block sizes (if $ n > 1$) among each marginal process.
+ The data is then transformed nonparametrically using the signed rank transformation.
+ At each iteration $k$, step and isolated shifts are added to the model and the most promising one is included in the regression.
+ Variable selection is performed by including a maximum of $q$ lagged values of the variable and using the LARS algorithm to select the first dummy regressor that is included among the candidate ones.
+ A full vector autoregressive model is avoided due to the large number of parameters it entails.
+ Once the regressor is added to the design matrix, the model statistic is computed by calculating the explained variance with both autoregressive and selected dummy variables.
+ It is not necessary for the statistics to have exactly zero mean and unitary variance; they only need to be approximately scaled to unit \citep{pesarin2016}.
+
+One way to accelerate computation is to apply the technique proposed by \citet{ding2020} in the following way:
+\begin{enumerate}[label=\arabic*)]
+    \item Compute $ J = 50$ values of the statistics $ T_{k}$ and calculate preliminary values $ \E[T_{k}]$ and $ \V[T_{k}]$. 
+    \item Then, calculate preliminary $ p$-value using the stopping rule from \citet{ding2020} with small $ \varepsilon$, e.g. 0.005.
+    \item If the method did not accept/reject the hypothesis, then do:
+        \begin{enumerate}
+            \item Calculate new statistics $ T_{k}, k = 1, \ldots, K$.
+            % \item Update $ \E[T_{k}]$ and $ \V[T_{k}]$ for each $ k$ using the \href{https://math.stackexchange.com/questions/374881/recursive-formula-for-variance}{recursive formulas}.
+            \item Update $ p$-value for the stopping rule in 2).
+        \end{enumerate}
+\end{enumerate}
 
 
 \printbibliography
